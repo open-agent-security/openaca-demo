@@ -4,47 +4,50 @@ Thanks for trying OpenACA. This is a closed beta on the `0.1.0b2`
 pre-release. Goal: surface the highest-friction gaps before a wider
 release.
 
-## Prerequisites — Python 3.11+
+## Install — recommended path (uv)
 
-OpenACA requires Python 3.11 or newer. Check what you have:
-
-```bash
-python3 --version
-```
-
-If your `python3` is 3.10 or older (macOS ships 3.9 as the system
-Python), install a newer one:
-
-- **Homebrew** (macOS, Linuxbrew): `brew install python@3.13`, then
-  use `python3.13`.
-- **uv** (cross-platform; installs Python without touching your
-  system one): `curl -LsSf https://astral.sh/uv/install.sh | sh`,
-  then `uv python install 3.13`.
-- **pyenv** (any platform): `pyenv install 3.13`.
-- **Direct installer**: https://www.python.org/downloads/ for an
-  official package.
-
-Any of these works; pick whichever fits your existing setup.
-
-## Install
+OpenACA requires Python 3.11+. The cleanest path also takes care of
+the Python prereq for you: install [uv](https://docs.astral.sh/uv/),
+then `uv tool install` openaca.
 
 ```bash
-python3.13 -m pip install --pre openaca   # or python3.11 / 3.12, etc.
+# 1. Install uv if you don't already have it.
+curl -LsSf https://astral.sh/uv/install.sh | sh
+
+# 2. Install openaca as an isolated CLI tool (uv provisions a
+#    matching Python automatically; nothing else to set up).
+uv tool install openaca
+
+# 3. Verify.
 openaca --version
 # current latest: openaca, version 0.1.0b2
 ```
 
-If `python3` already resolves to 3.11+, plain `pip install --pre
-openaca` works.
-
-The `--pre` flag is required while OpenACA is in pre-release —
-without it pip refuses to install since there's no stable version
-yet. `--pre` always picks up the latest beta, so you don't need to
-hunt for the current version. The version you actually installed
-shows up in your bug report via `openaca --version`.
+`uv tool install` puts the `openaca` binary in `~/.local/bin/` and
+gives it its own venv, so it doesn't touch any of your existing
+Python setups. While OpenACA has no stable release yet, uv
+auto-picks the latest pre-release without any extra flag.
 
 If you need to reproduce a bug against an exact build, pin it:
-`pip install openaca==0.1.0b2`.
+`uv tool install openaca==0.1.0b2`.
+
+## Install — alternative (pip)
+
+If you already have a Python 3.11+ workflow and prefer pip:
+
+```bash
+python3.13 -m pip install openaca   # or python3.11 / 3.12, etc.
+openaca --version
+```
+
+If `python3` already resolves to 3.11+, plain `pip install openaca`
+works. pip auto-falls-back to the latest pre-release while no stable
+exists.
+
+If your `python3` is 3.10 or older (macOS ships 3.9 as the system
+Python), grab a newer one via Homebrew (`brew install python@3.13`),
+pyenv (`pyenv install 3.13`), or python.org's installer — then use
+that interpreter for the pip command.
 
 ## First scan
 
@@ -168,21 +171,26 @@ the cohort.
 
 ## Re-testing after a fix
 
-When I ship a new pre-release with a fix you reported, upgrade with:
+When I ship a new pre-release with a fix you reported, upgrade to
+the newest beta:
 
 ```bash
-pip install --pre --upgrade openaca
+uv tool upgrade openaca           # if you installed via uv tool
+# or
+pip install --upgrade openaca     # if you installed via pip
 ```
 
-That pulls the newest beta. `openaca --version` will show what you
-just got. No need to wait for me to send a note — `--pre --upgrade`
-is always current.
+`openaca --version` will show what you just got. No need to wait for
+me to send a note — both commands always fetch the latest available
+release (currently the newest pre-release).
 
 If you want to go back to the exact build you originally tested
 against (e.g., to confirm a fix actually changed behavior):
 
 ```bash
-pip install --force-reinstall openaca==<version>
+uv tool install --force openaca==<version>   # uv path
+# or
+pip install --force-reinstall openaca==<version>   # pip path
 ```
 
 Substitute the version that's in your bug report.
