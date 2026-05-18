@@ -109,9 +109,10 @@ names, paths, or component IDs you don't want public:
   rules (mutable install references, insecure transport, missing
   remote auth) are opt-in via `--include-posture`. They're separate
   from vulnerability findings and never fail CI by default.
-- **In-flight work.** `docs/plans/` shows what's actively being
-  built. If you find yourself wishing for something there, that's
-  useful feedback — say so.
+- **In-flight work.** I'll call out specific known gaps in beta
+  updates as they ship. If you find yourself wishing for something
+  the scanner doesn't do yet, that's exactly the feedback I want
+  — say so.
 
 ## How to report
 
