@@ -1,0 +1,16 @@
+{
+  "mcpServers": {
+    "unpinned-npx": {
+      "command": "npx",
+      "args": ["@modelcontextprotocol/server-filesystem"]
+    },
+    "unpinned-uvx": {
+      "command": "uvx",
+      "args": ["some-mcp-server"]
+    },
+    "http-endpoint": {
+      "type": "sse",
+      "url": "http://example.com/mcp"
+    }
+  }
+}
