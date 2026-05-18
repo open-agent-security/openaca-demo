@@ -1,11 +1,13 @@
 # openaca-demo
 
-Sample manifests for trying out [OpenACA](https://github.com/open-agent-security/openaca).
+Sample manifests for trying out OpenACA. The openaca package itself
+is installable from PyPI: `pip install openaca==0.1.0b1`.
 
-If you're a beta tester, the
-[beta-tester guide](https://github.com/open-agent-security/openaca/blob/main/docs/beta-tester-guide.md)
-has the full path. This repo gives you a few stable targets to point
-the scanner at while you're getting your bearings.
+If you're a closed-beta tester, read the
+[**beta-tester guide**](./BETA-TESTER-GUIDE.md) first — it covers
+install, first scan, what feedback I'm looking for, and how to
+report. This repo gives you a few stable targets to point the
+scanner at while you're getting your bearings.
 
 ## Setup
 
