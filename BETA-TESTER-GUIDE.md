@@ -1,8 +1,29 @@
 # OpenACA — Beta Tester Guide
 
-Thanks for trying OpenACA. This is a closed beta on the `0.1.0b2`
-pre-release. Goal: surface the highest-friction gaps before a wider
-release.
+## What OpenACA is
+
+OpenACA is a security scanner + overlay corpus for agent stacks — MCP
+servers, Claude Code plugins, agent SDK dependencies. It's the
+agent-stack analogue of Software Composition Analysis (SCA):
+identifies the versioned components your agent stack is composed of
+and matches them against known security records (CVE / GHSA / OSV +
+agent-context overlays maintained by this project).
+
+Two scan modes:
+
+- `openaca scan repo --target <path>` answers *"what agent-stack
+  manifests are committed in this repository?"* — CI gate, PR check.
+- `openaca scan endpoint` answers *"what agent tools are installed on
+  this machine right now?"* — laptop / runner sweep against the Claude
+  Code endpoint.
+
+Full overview, V0 scope, and example output: https://pypi.org/project/openaca/
+
+## About this beta
+
+Thanks for trying it. This is a closed beta on the `0.1.0b2`
+pre-release — goal: surface the highest-friction gaps before a wider
+release. What I'm looking for is below in "Feedback I'm looking for."
 
 ## Install — recommended path (uv)
 
