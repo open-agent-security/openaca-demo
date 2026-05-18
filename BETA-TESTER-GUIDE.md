@@ -1,18 +1,41 @@
 # OpenACA — Beta Tester Guide
 
-Thanks for trying OpenACA. This is a closed beta on the `0.1.0b1`
+Thanks for trying OpenACA. This is a closed beta on the `0.1.0b2`
 pre-release. Goal: surface the highest-friction gaps before a wider
 release.
+
+## Prerequisites — Python 3.11+
+
+OpenACA requires Python 3.11 or newer. Check what you have:
+
+```bash
+python3 --version
+```
+
+If your `python3` is 3.10 or older (macOS ships 3.9 as the system
+Python), install a newer one:
+
+- **Homebrew** (macOS, Linuxbrew): `brew install python@3.13`, then
+  use `python3.13`.
+- **uv** (cross-platform; installs Python without touching your
+  system one): `curl -LsSf https://astral.sh/uv/install.sh | sh`,
+  then `uv python install 3.13`.
+- **pyenv** (any platform): `pyenv install 3.13`.
+- **Direct installer**: https://www.python.org/downloads/ for an
+  official package.
+
+Any of these works; pick whichever fits your existing setup.
 
 ## Install
 
 ```bash
-pip install openaca==0.1.0b1
+python3.13 -m pip install openaca==0.1.0b2   # or python3.11 / 3.12, etc.
 openaca --version
-# expected: openaca, version 0.1.0b1
+# expected: openaca, version 0.1.0b2
 ```
 
-Requires Python 3.11+.
+If `python3` already resolves to 3.11+, plain `pip install
+openaca==0.1.0b2` works.
 
 ## First scan
 
@@ -136,13 +159,13 @@ the cohort.
 
 ## Pinning a version
 
-Since you're testing `0.1.0b1`, your bug report links to a specific
+Since you're testing `0.1.0b2`, your bug report links to a specific
 build. If I push fixes and you want to re-test the same scenario:
 
 ```bash
-pip install --force-reinstall openaca==0.1.0b1
+pip install --force-reinstall openaca==0.1.0b2
 ```
 
-For the next pre-release (e.g., `0.1.0b2`), I'll send a note.
+For the next pre-release (e.g., `0.1.0b3`), I'll send a note.
 
 — Vinod
