@@ -2,17 +2,20 @@
 
 ## What OpenACA is
 
-OpenACA is a security scanner + overlay corpus for agent stacks — MCP
-servers, Claude Code plugins, agent SDK dependencies. It's the
-agent-stack analogue of Software Composition Analysis (SCA):
-identifies the versioned components your agent stack is composed of
-and matches them against known security records (CVE / GHSA / OSV +
-agent-context overlays maintained by this project).
+OpenACA is a security scanner + overlay corpus for **Agent Composition
+Analysis (ACA)** — identifying the plugins, MCP servers, skills, and
+library dependencies that make up an AI agent, and matching them
+against known security records (CVE / GHSA / OSV + agent-context
+overlays maintained by this project).
+
+It's the AI-agent analogue of Software Composition Analysis (SCA):
+SCA tells you what's in your application's dependency tree; ACA tells
+you what's in your agent's composition.
 
 Two scan modes:
 
-- `openaca scan repo --target <path>` answers *"what agent-stack
-  manifests are committed in this repository?"* — CI gate, PR check.
+- `openaca scan repo --target <path>` answers *"what agent components
+  are declared in this repository?"* — CI gate, PR check.
 - `openaca scan endpoint` answers *"what agent tools are installed on
   this machine right now?"* — laptop / runner sweep against the Claude
   Code endpoint.
@@ -157,10 +160,11 @@ names, paths, or component IDs you don't want public:
   (`query({ mcpServers: { ... } })`), tools registered
   programmatically, or anything from source-code parsing. Those are
   V1 scope.
-- **Corpus focused on agent-stack threats.** The overlay corpus
-  prioritizes malicious-package records for MCP servers, agent
-  framework packages, and AI infra. It's not a substitute for a
-  general-purpose SCA tool on your whole dependency tree — use both.
+- **Corpus focused on agent-composition threats.** The overlay
+  corpus prioritizes malicious-package records for MCP servers,
+  agent framework packages, and AI infra. It's not a substitute for
+  a general-purpose SCA tool on your whole dependency tree — use
+  both.
 - **Posture findings off by default.** The configuration-hygiene
   rules (mutable install references, insecure transport, missing
   remote auth) are opt-in via `--include-posture`. They're separate
