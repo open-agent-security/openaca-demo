@@ -108,9 +108,10 @@ see early:
    (posture-checks).
 
 After running these, point OpenACA at one of your own repos or your
-Claude Code install (`openaca scan endpoint`) and file feedback via
-the
-[beta-feedback issue template](https://github.com/open-agent-security/openaca/issues/new?template=beta-feedback.md).
+Claude Code install (`openaca scan endpoint`) and send feedback to
+the maintainer (vinodkone@gmail.com, or whatever channel you already
+use). The openaca repo is private during the closed beta, so GitHub
+issues aren't open to external testers yet — DM is the path.
 
 ## License
 
