@@ -29,13 +29,22 @@ Any of these works; pick whichever fits your existing setup.
 ## Install
 
 ```bash
-python3.13 -m pip install openaca==0.1.0b2   # or python3.11 / 3.12, etc.
+python3.13 -m pip install --pre openaca   # or python3.11 / 3.12, etc.
 openaca --version
-# expected: openaca, version 0.1.0b2
+# current latest: openaca, version 0.1.0b2
 ```
 
-If `python3` already resolves to 3.11+, plain `pip install
-openaca==0.1.0b2` works.
+If `python3` already resolves to 3.11+, plain `pip install --pre
+openaca` works.
+
+The `--pre` flag is required while OpenACA is in pre-release —
+without it pip refuses to install since there's no stable version
+yet. `--pre` always picks up the latest beta, so you don't need to
+hunt for the current version. The version you actually installed
+shows up in your bug report via `openaca --version`.
+
+If you need to reproduce a bug against an exact build, pin it:
+`pip install openaca==0.1.0b2`.
 
 ## First scan
 
@@ -157,15 +166,25 @@ One paragraph is plenty. The fields I find most useful:
 One filed observation is the bar. The friction signal compounds across
 the cohort.
 
-## Pinning a version
+## Re-testing after a fix
 
-Since you're testing `0.1.0b2`, your bug report links to a specific
-build. If I push fixes and you want to re-test the same scenario:
+When I ship a new pre-release with a fix you reported, upgrade with:
 
 ```bash
-pip install --force-reinstall openaca==0.1.0b2
+pip install --pre --upgrade openaca
 ```
 
-For the next pre-release (e.g., `0.1.0b3`), I'll send a note.
+That pulls the newest beta. `openaca --version` will show what you
+just got. No need to wait for me to send a note — `--pre --upgrade`
+is always current.
+
+If you want to go back to the exact build you originally tested
+against (e.g., to confirm a fix actually changed behavior):
+
+```bash
+pip install --force-reinstall openaca==<version>
+```
+
+Substitute the version that's in your bug report.
 
 — Vinod
