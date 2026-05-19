@@ -28,7 +28,7 @@ Thanks for trying it. This is a closed beta on the `0.1.0b2`
 pre-release — goal: surface the highest-friction gaps before a wider
 release. What I'm looking for is below in "Feedback I'm looking for."
 
-## Install — recommended path (uv)
+## Install
 
 OpenACA requires Python 3.11+. The cleanest path also takes care of
 the Python prereq for you: install [uv](https://docs.astral.sh/uv/),
@@ -54,24 +54,6 @@ auto-picks the latest pre-release without any extra flag.
 
 If you need to reproduce a bug against an exact build, pin it:
 `uv tool install openaca==0.1.0b2`.
-
-## Install — alternative (pip)
-
-If you already have a Python 3.11+ workflow and prefer pip:
-
-```bash
-python3.13 -m pip install openaca   # or python3.11 / 3.12, etc.
-openaca --version
-```
-
-If `python3` already resolves to 3.11+, plain `pip install openaca`
-works. pip auto-falls-back to the latest pre-release while no stable
-exists.
-
-If your `python3` is 3.10 or older (macOS ships 3.9 as the system
-Python), grab a newer one via Homebrew (`brew install python@3.13`),
-pyenv (`pyenv install 3.13`), or python.org's installer — then use
-that interpreter for the pip command.
 
 ## First scan
 
@@ -200,22 +182,18 @@ When I ship a new pre-release with a fix you reported, upgrade to
 the newest beta:
 
 ```bash
-uv tool upgrade openaca           # if you installed via uv tool
-# or
-pip install --upgrade openaca     # if you installed via pip
+uv tool upgrade openaca
 ```
 
 `openaca --version` will show what you just got. No need to wait for
-me to send a note — both commands always fetch the latest available
-release (currently the newest pre-release).
+me to send a note — `uv tool upgrade` always fetches the latest
+available release (currently the newest pre-release).
 
 If you want to go back to the exact build you originally tested
 against (e.g., to confirm a fix actually changed behavior):
 
 ```bash
-uv tool install --force openaca==<version>   # uv path
-# or
-pip install --force-reinstall openaca==<version>   # pip path
+uv tool install --force openaca==<version>
 ```
 
 Substitute the version that's in your bug report.
