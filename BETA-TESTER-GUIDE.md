@@ -41,7 +41,7 @@ curl -LsSf https://astral.sh/uv/install.sh | sh
 # 2. Install openaca as an isolated CLI tool (uv provisions a
 #    matching Python automatically; nothing else to set up).
 #    The beta flow described below assumes 0.1.0b3 or newer.
-uv tool install 'openaca>=0.1.0b3'
+uv tool install openaca
 
 # 3. Verify.
 openaca --version
@@ -49,10 +49,8 @@ openaca --version
 
 `uv tool install` puts the `openaca` binary in `~/.local/bin/` and
 gives it its own venv, so it doesn't touch any of your existing
-Python setups. The `>=0.1.0b3` floor matches the endpoint-scan
-behavior this guide documents (opt-in `--project` with the
-reminder note); older pre-releases used a different flow and will
-confuse the instructions below.
+Python setups. While OpenACA has no stable release yet, uv
+auto-picks the latest pre-release without any extra flag.
 
 If you need to reproduce a bug against an exact build, pin it:
 `uv tool install openaca==<version>`.
