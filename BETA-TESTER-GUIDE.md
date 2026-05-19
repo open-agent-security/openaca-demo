@@ -18,15 +18,15 @@ Two scan modes:
   are declared in this repository?"* — CI gate, PR check.
 - `openaca scan endpoint` answers *"what agent tools are installed on
   this machine right now?"* — laptop / runner sweep against the Claude
-  Code endpoint.
+  Code endpoint and the current project.
 
 Full overview, V0 scope, and example output: https://pypi.org/project/openaca/
 
 ## About this beta
 
-Thanks for trying it. This is a closed beta on the `0.1.0b2`
-pre-release — goal: surface the highest-friction gaps before a wider
-release. What I'm looking for is below in "Feedback I'm looking for."
+Thanks for trying it. This is a closed pre-release beta — goal: surface
+the highest-friction gaps before a wider release. What I'm looking for
+is below in "Feedback I'm looking for."
 
 ## Install
 
@@ -44,7 +44,6 @@ uv tool install openaca
 
 # 3. Verify.
 openaca --version
-# current latest: openaca, version 0.1.0b2
 ```
 
 `uv tool install` puts the `openaca` binary in `~/.local/bin/` and
@@ -53,43 +52,215 @@ Python setups. While OpenACA has no stable release yet, uv
 auto-picks the latest pre-release without any extra flag.
 
 If you need to reproduce a bug against an exact build, pin it:
-`uv tool install openaca==0.1.0b2`.
+`uv tool install openaca==<version>`.
 
-## First scan
+## See a real finding first
 
-Point it at one endpoint or repo you already maintain — your own
-Claude Code install, an agent project, an MCP server you author. The
-scanner doesn't phone home; everything runs locally.
+Before pointing the scanner at your own environment (which might
+legitimately produce no findings), validate the install against the
+[openaca-demo](https://github.com/open-agent-security/openaca-demo)
+fixtures. This takes 30 seconds and shows what a real finding looks
+like, so you know what "working" looks like before interpreting your
+own scan.
+
+```bash
+git clone https://github.com/open-agent-security/openaca-demo.git
+cd openaca-demo
+openaca scan repo --target sample-mcp
+```
+
+Expected output:
+
+```
+Found 1 vulnerability in 1 package.
+
+@cyanheads/git-mcp-server 1.1.0
+  location: sample-mcp/mcp.json
+  fix:      upgrade to >=2.1.5
+
+  HIGH  GHSA-3q26-f695-pp76  fixed in 2.1.5  @cyanheads/git-mcp-server vulnerable to command injection in several tools  [osv.dev]
+
+Scanned 1 manifest, 1 component. Sources: osv.dev.
+```
+
+The three fixtures (`sample-mcp/`, `clean-scan/`, `posture-checks/`)
+exercise the three things worth seeing early: a real vulnerability
+finding, a clean inventory line, and configuration-hygiene
+(posture) findings. See the
+[openaca-demo README](https://github.com/open-agent-security/openaca-demo)
+for all three.
+
+## Scan your own environment
+
+Once you've seen the demo run, point OpenACA at one of your own
+targets. The scanner doesn't phone home; everything runs locally.
 
 Run scans with `-v` for verbose output — per-finding component /
 source / container context is much more useful than the default
 compact view for first impressions.
 
-**Endpoint mode** — scans your installed Claude Code endpoint
-(`~/.claude` or `$CLAUDE_CONFIG_DIR`). Usually the fastest "is this
-useful?" check, since most testers already have Claude Code running:
+### Endpoint mode
+
+Scans your installed Claude Code endpoint (`~/.claude` or
+`$CLAUDE_CONFIG_DIR`) **and** your current project context. From a
+Claude Code project directory:
 
 ```bash
+cd /path/to/your/agent-project
 openaca scan endpoint -v
 ```
 
-**Repo mode** — scans declared manifests in a code repo (`.mcp.json`,
+By default, `openaca scan endpoint` includes the current working
+directory as the project context — that's where your project-local
+skills (`.claude/skills/`), MCP configs (`.mcp.json`), and plugin
+manifests live. If you run from a directory that isn't a Claude Code
+project, the project portion will simply find nothing — no harm done.
+
+To override the project context or skip it entirely:
+
+```bash
+# Scan a specific project instead of cwd.
+openaca scan endpoint --project /path/to/other-project -v
+
+# User-level endpoint only (no project context).
+openaca scan endpoint --no-project -v
+```
+
+### Repo mode
+
+Scans declared manifests in a code repo (`.mcp.json`,
 `.claude-plugin/plugin.json`, `.claude/settings.json`, marketplace
-registries, etc.):
+registries, lockfiles, etc.) without touching your user-level Claude
+install:
 
 ```bash
 openaca scan repo --target /path/to/your/repo -v
 ```
 
-Both modes accept `--sarif results.sarif`, `--format json`, and
-`--include-posture` (configuration-hygiene rules — off by default,
-worth turning on if you want first-scan signal even when the corpus
-finds no vulnerabilities).
+### Common flags (both modes)
 
-Want to verify the install before pointing it at a real target? The
-[fixtures in this repo](./README.md) — `sample-mcp/`, `clean-scan/`,
-`posture-checks/` — each exercise one scan flavor end-to-end. Clone
-the repo and `openaca scan repo --target <fixture-dir> -v`.
+- `--sarif results.sarif` — SARIF output for CI integration.
+- `--format github` — GitHub Actions annotations.
+- `--format json` — JSON to stdout (informational lines go to stderr,
+  so the JSON stays clean for piping).
+- `--fail-on high|medium|low|none` — exit-code policy (default: `any`).
+- `--include-posture` — opt-in to configuration-hygiene rules (see
+  the "Posture rules" section below). Off by default.
+
+## What "no findings" actually means
+
+A clean scan reports something like:
+
+```
+Scanned 1 manifest, 2 components — no findings.
+OpenACA scans agent composition; for general software dependency scans, use a general-purpose SCA scanner.
+```
+
+This is a specific claim: **no matching OpenACA overlay or OSV
+advisory was found for the components OpenACA was able to identify**.
+It is **not** a claim that your environment is safe.
+
+In particular:
+
+- **Coverage scope.** OpenACA matches against its own overlay corpus
+  (focused on agent-stack threats) plus OSV/GHSA advisories that have
+  queryable package identities (PURLs). Skills, plugins, and hook
+  scripts often don't yet have such identities, so a skill-heavy
+  inventory can produce zero advisory findings even if vulnerabilities
+  exist somewhere in those components.
+- **V0 mode is inventory-first for endpoint scans.** Treat the
+  inventory output ("you have N components, here's what they are") as
+  the primary value of endpoint mode today. Advisory matching is
+  strongest in repo mode where lockfiles and `mcp.json` give the
+  scanner queryable package identities.
+- **A non-zero inventory line is the success signal.** "Scanned 1
+  manifest, 2 components — no findings" means the scanner saw your
+  components and matched zero advisories. "Scanned 0 manifests, 0
+  components" usually means the scanner didn't find what you
+  expected — file that as feedback.
+
+## Posture rules (--include-posture)
+
+Posture rules cover **configuration hygiene** — settings that aren't
+vulnerabilities but make the agent stack riskier to operate. They're
+off by default (because they're advisory, not vulnerability-grade)
+and excluded from `--fail-on` so they never break CI by accident.
+
+Turn them on with `--include-posture`:
+
+```bash
+openaca scan repo --target /path/to/repo --include-posture
+```
+
+V0 ships two posture rules:
+
+| Rule ID | Severity | What it flags |
+|---|---|---|
+| `openaca-posture-insecure-transport` | MEDIUM | MCP endpoints over plain `http://` instead of `https://`. |
+| `openaca-posture-mutable-install-reference` | LOW | Install references without a pinned version (e.g. `npx @scope/pkg` with no version, `uvx some-server`, `@latest`, branch refs). |
+
+If `--include-posture` produces no output, it means none of these
+rules matched your config. It is not a no-op — see the
+`openaca-demo/posture-checks/` fixture for example output showing
+both rules firing.
+
+## Inventory glossary
+
+Terms that show up in scan output and aren't always self-explanatory:
+
+- **Active plugin** — an enabled Claude Code plugin (installed via
+  marketplace, manifest, etc.) and the skills, commands, hooks, or
+  MCPs it bundles. Bundled components are attributed back to the
+  parent plugin in the tree output.
+- **Direct component** — a skill, command, hook, or MCP config found
+  in your user or project config that isn't attributable to an
+  installed plugin (e.g., a hand-authored skill under
+  `~/.claude/skills/` or `<repo>/.claude/skills/`).
+- **Manifest** — a config file OpenACA parsed to discover components:
+  `.mcp.json`, `.claude-plugin/plugin.json`, `.claude/settings.json`,
+  `package.json`, `pyproject.toml`, `package-lock.json`, `uv.lock`,
+  marketplace registries, etc.
+
+## What V0 covers (and what it doesn't)
+
+### Endpoint mode sources
+
+When you run `openaca scan endpoint`, the scanner looks at:
+
+| Source | In V0 scope? |
+|---|---|
+| `~/.claude/settings.json` and equivalents | Yes |
+| `~/.claude/skills/`, `~/.claude/commands/`, `~/.claude/agents/` | Yes |
+| Installed Claude Code plugins (manifest discovery) | Yes |
+| Current project's `.claude/skills/`, `.mcp.json`, plugin manifest | Yes (via the default CWD project context) |
+| `mcpServers` in `~/.claude/settings.json` or project `.mcp.json` | Yes |
+| Claude Desktop config | Partial (same JSON shape; not fully validated against Claude Desktop layouts yet) |
+| Cursor / Aider / Continue / Cody / other agent-host configs | Not yet |
+| MCPs registered programmatically via SDK (`query({ mcpServers: ... })`) | Not yet (V1) |
+| Remote/marketplace MCP servers attached at runtime | Not yet |
+
+If the scan reports `0 MCP servers` and you know you have remote or
+SDK-attached MCPs, that's an out-of-scope coverage gap — please
+report it so the inventory boundary keeps moving.
+
+### What V0 deliberately does NOT do
+
+- **No SDK-inline parsing.** V0 reads declared manifests; it doesn't
+  parse Python or TypeScript source to find programmatically
+  registered MCP servers, tools, or hooks. Those are V1 scope.
+- **Not a general-purpose SCA scanner.** The corpus is focused on
+  agent-stack threats (malicious MCP packages, agent framework
+  vulnerabilities, AI infra). Use a general-purpose SCA tool for
+  your full dependency tree.
+- **No artifact scanning.** OpenACA doesn't unpack or analyze the
+  contents of installed skills/plugins — it identifies them and
+  matches against the advisory corpus.
+
+### What's in-flight
+
+If you find yourself wishing for something that isn't there yet —
+that's exactly the feedback I want. Coverage gaps are the most
+useful signal right now.
 
 ## Feedback I'm looking for
 
@@ -123,38 +294,6 @@ names, paths, or component IDs you don't want public:
   `--sarif results.sarif --format json` and edit before sending.
 - **For sensitive output, DM beats filing in public** (see the
   "How to report" section below for the DM path).
-
-## Known limitations in V0
-
-- **Agent-host coverage is narrow.**
-  - **Endpoint mode** scans Claude Code only — it expects the
-    `~/.claude` (or `$CLAUDE_CONFIG_DIR`) layout. Cursor, Aider,
-    Continue, Cody, Claude Desktop, etc. aren't endpoint-supported
-    yet.
-  - **Repo mode** is anchored on Claude Code's declared manifests
-    (`.claude-plugin/plugin.json`, `.claude/settings.json`, plus the
-    host-agnostic `.mcp.json` / `mcp.json` that most MCP-aware hosts
-    use). Other agent hosts are inventory-supported only via their
-    `mcp.json` if they emit one — host-specific config formats
-    aren't parsed.
-- **Declared manifests only.** V0 reads what's in those config
-  files. It does **not** extract MCP servers defined SDK-inline
-  (`query({ mcpServers: { ... } })`), tools registered
-  programmatically, or anything from source-code parsing. Those are
-  V1 scope.
-- **Corpus focused on agent-composition threats.** The overlay
-  corpus prioritizes malicious-package records for MCP servers,
-  agent framework packages, and AI infra. It's not a substitute for
-  a general-purpose SCA tool on your whole dependency tree — use
-  both.
-- **Posture findings off by default.** The configuration-hygiene
-  rules (mutable install references, insecure transport, missing
-  remote auth) are opt-in via `--include-posture`. They're separate
-  from vulnerability findings and never fail CI by default.
-- **In-flight work.** I'll call out specific known gaps in beta
-  updates as they ship. If you find yourself wishing for something
-  the scanner doesn't do yet, that's exactly the feedback I want
-  — say so.
 
 ## How to report
 
