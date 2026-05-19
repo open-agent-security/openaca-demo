@@ -102,29 +102,27 @@ compact view for first impressions.
 ### Endpoint mode
 
 Scans your installed Claude Code endpoint (`~/.claude` or
-`$CLAUDE_CONFIG_DIR`) **and** your current project context. From a
-Claude Code project directory:
+`$CLAUDE_CONFIG_DIR`):
 
 ```bash
-cd /path/to/your/agent-project
 openaca scan endpoint -v
 ```
 
-By default, `openaca scan endpoint` includes the current working
-directory as the project context — that's where your project-local
-skills (`.claude/skills/`), MCP configs (`.mcp.json`), and plugin
-manifests live. If you run from a directory that isn't a Claude Code
-project, the project portion will simply find nothing — no harm done.
-
-To override the project context or skip it entirely:
+This scans **only your user-level Claude config**. To also include
+project-local skills (`.claude/skills/`), MCP configs (`.mcp.json`),
+and plugin manifests from a project, pass `--project`:
 
 ```bash
-# Scan a specific project instead of cwd.
-openaca scan endpoint --project /path/to/other-project -v
+# Include the current directory as project context.
+openaca scan endpoint --project . -v
 
-# User-level endpoint only (no project context).
-openaca scan endpoint --no-project -v
+# Or point at a specific project directory.
+openaca scan endpoint --project /path/to/your/agent-project -v
 ```
+
+The scanner prints a one-line reminder on every endpoint scan that
+omits `--project`, so you don't need to memorize the flag — it'll
+tell you. The reminder is suppressed once you pass `--project`.
 
 ### Repo mode
 
