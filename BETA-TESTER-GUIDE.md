@@ -40,7 +40,8 @@ curl -LsSf https://astral.sh/uv/install.sh | sh
 
 # 2. Install openaca as an isolated CLI tool (uv provisions a
 #    matching Python automatically; nothing else to set up).
-uv tool install openaca
+#    The beta flow described below assumes 0.1.0b3 or newer.
+uv tool install 'openaca>=0.1.0b3'
 
 # 3. Verify.
 openaca --version
@@ -48,8 +49,10 @@ openaca --version
 
 `uv tool install` puts the `openaca` binary in `~/.local/bin/` and
 gives it its own venv, so it doesn't touch any of your existing
-Python setups. While OpenACA has no stable release yet, uv
-auto-picks the latest pre-release without any extra flag.
+Python setups. The `>=0.1.0b3` floor matches the endpoint-scan
+behavior this guide documents (opt-in `--project` with the
+reminder note); older pre-releases used a different flow and will
+confuse the instructions below.
 
 If you need to reproduce a bug against an exact build, pin it:
 `uv tool install openaca==<version>`.
@@ -230,7 +233,7 @@ When you run `openaca scan endpoint`, the scanner looks at:
 | `~/.claude/settings.json` and equivalents | Yes |
 | `~/.claude/skills/`, `~/.claude/commands/`, `~/.claude/agents/` | Yes |
 | Installed Claude Code plugins (manifest discovery) | Yes |
-| Current project's `.claude/skills/`, `.mcp.json`, plugin manifest | Yes (via the default CWD project context) |
+| Current project's `.claude/skills/`, `.mcp.json`, plugin manifest | Yes, when `--project` is passed (opt-in; the scanner reminds you about the flag if omitted) |
 | `mcpServers` in `~/.claude/settings.json` or project `.mcp.json` | Yes |
 | Claude Desktop config | Partial (same JSON shape; not fully validated against Claude Desktop layouts yet) |
 | Cursor / Aider / Continue / Cody / other agent-host configs | Not yet |
