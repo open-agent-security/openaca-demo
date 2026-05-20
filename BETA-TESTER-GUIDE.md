@@ -236,11 +236,19 @@ When you run `openaca scan endpoint`, the scanner looks at:
 | Claude Desktop config | Partial (same JSON shape; not fully validated against Claude Desktop layouts yet) |
 | Cursor / Aider / Continue / Cody / other agent-host configs | Not yet |
 | MCPs registered programmatically via SDK (`query({ mcpServers: ... })`) | Not yet (V1) |
+| MCPs managed by your claude.ai account (the `claude.ai *` lines in `claude mcp list`) | Not yet — runtime state synced from claude.ai, not on-disk config |
 | Remote/marketplace MCP servers attached at runtime | Not yet |
 
-If the scan reports `0 MCP servers` and you know you have remote or
-SDK-attached MCPs, that's an out-of-scope coverage gap — please
-report it so the inventory boundary keeps moving.
+If the scan reports `0 MCP servers` and you know you have MCPs
+configured, two common reasons:
+
+- **claude.ai-managed MCPs** (Slack, Gmail, Google Drive, etc.) live
+  in your claude.ai account, not in any on-disk config file. They're
+  visible in `claude mcp list` under `claude.ai *` but aren't in V0
+  scope yet — see the table row above.
+- **SDK-registered or runtime-attached MCPs** are out of V0 scope
+  too. If you hit either case, file it as feedback so the inventory
+  boundary keeps moving.
 
 ### What V0 deliberately does NOT do
 
