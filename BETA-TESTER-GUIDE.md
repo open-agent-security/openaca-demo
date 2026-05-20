@@ -28,46 +28,31 @@ Thanks for trying it. This is a closed pre-release beta — goal: surface
 the highest-friction gaps before a wider release. What I'm looking for
 is below in "Feedback I'm looking for."
 
-## Install
+## Quick start
 
-OpenACA requires Python 3.11+. The cleanest path also takes care of
-the Python prereq for you: install [uv](https://docs.astral.sh/uv/),
-then `uv tool install` openaca.
+You need [uv](https://docs.astral.sh/uv/getting-started/installation/).
+Then:
 
 ```bash
-# 1. Install uv if you don't already have it.
-curl -LsSf https://astral.sh/uv/install.sh | sh
-
-# 2. Install openaca as an isolated CLI tool (uv provisions a
-#    matching Python automatically; nothing else to set up).
-#    The beta flow described below assumes 0.1.0b3 or newer.
-uv tool install openaca
-
-# 3. Verify.
-openaca --version
+uvx openaca scan endpoint -v
 ```
 
-`uv tool install` puts the `openaca` binary in `~/.local/bin/` and
-gives it its own venv, so it doesn't touch any of your existing
-Python setups. While OpenACA has no stable release yet, uv
-auto-picks the latest pre-release without any extra flag.
+This runs OpenACA against your Claude Code endpoint with verbose
+output. For configuration-hygiene checks, add `--include-posture`
+(see the "Optional: posture findings" section below).
 
-If you need to reproduce a bug against an exact build, pin it:
-`uv tool install openaca==<version>`.
+Want to see what a real vulnerability finding looks like first? Run
+the demo in the next section.
 
 ## See a real finding first
 
-Before pointing the scanner at your own environment (which might
-legitimately produce no findings), validate the install against the
-[openaca-demo](https://github.com/open-agent-security/openaca-demo)
-fixtures. This takes 30 seconds and shows what a real finding looks
-like, so you know what "working" looks like before interpreting your
-own scan.
+Before scanning your own environment, run OpenACA against the demo
+repo so you know what a real finding looks like.
 
 ```bash
 git clone https://github.com/open-agent-security/openaca-demo.git
 cd openaca-demo
-openaca scan repo --target sample-mcp
+uvx openaca scan repo --target sample-mcp
 ```
 
 Expected output:
@@ -84,12 +69,11 @@ Found 1 vulnerability in 1 package.
 Scanned 1 manifest, 1 component. Sources: osv.dev.
 ```
 
-The three fixtures (`sample-mcp/`, `clean-scan/`, `posture-checks/`)
-exercise the three things worth seeing early: a real vulnerability
-finding, a clean inventory line, and configuration-hygiene
-(posture) findings. See the
-[openaca-demo README](https://github.com/open-agent-security/openaca-demo)
-for all three.
+That confirms install + advisory matching are working, and shows the
+finding shape (affected component, manifest, severity, advisory ID,
+fix). For the fuller demo — remote MCP inventory, OSV federation
+details, and posture findings end-to-end — see the
+[openaca-demo README](https://github.com/open-agent-security/openaca-demo).
 
 ## Scan your own environment
 
@@ -106,7 +90,7 @@ Scans your installed Claude Code endpoint (`~/.claude` or
 `$CLAUDE_CONFIG_DIR`):
 
 ```bash
-openaca scan endpoint -v
+uvx openaca scan endpoint -v
 ```
 
 This scans **only your user-level Claude config**. To also include
@@ -115,10 +99,10 @@ and plugin manifests from a project, pass `--project`:
 
 ```bash
 # Include the current directory as project context.
-openaca scan endpoint --project . -v
+uvx openaca scan endpoint --project . -v
 
 # Or point at a specific project directory.
-openaca scan endpoint --project /path/to/your/agent-project -v
+uvx openaca scan endpoint --project /path/to/your/agent-project -v
 ```
 
 The scanner prints a one-line reminder on every endpoint scan that
@@ -133,7 +117,7 @@ registries, lockfiles, etc.) without touching your user-level Claude
 install:
 
 ```bash
-openaca scan repo --target /path/to/your/repo -v
+uvx openaca scan repo --target /path/to/your/repo -v
 ```
 
 ### Common flags (both modes)
@@ -146,62 +130,36 @@ openaca scan repo --target /path/to/your/repo -v
 - `--include-posture` — opt-in to configuration-hygiene rules (see
   the "Posture rules" section below). Off by default.
 
-## What "no findings" actually means
+## What "no findings" means
 
-A clean scan reports something like:
+"No findings" means **no matching OpenACA overlay or OSV advisory for
+the components OpenACA could identify** — not that your environment
+is safe. The non-zero inventory line ("Scanned N manifests, M
+components") is the success signal that the scanner saw something;
+zero inventory usually means the scanner didn't find what you
+expected, which is worth reporting back.
 
-```
-Scanned 1 manifest, 2 components — no findings.
-OpenACA scans agent composition; for general software dependency scans, use a general-purpose SCA scanner.
-```
+## Optional: posture findings
 
-This is a specific claim: **no matching OpenACA overlay or OSV
-advisory was found for the components OpenACA was able to identify**.
-It is **not** a claim that your environment is safe.
-
-In particular:
-
-- **Coverage scope.** OpenACA matches against its own overlay corpus
-  (focused on agent-stack threats) plus OSV/GHSA advisories that have
-  queryable package identities (PURLs). Skills, plugins, and hook
-  scripts often don't yet have such identities, so a skill-heavy
-  inventory can produce zero advisory findings even if vulnerabilities
-  exist somewhere in those components.
-- **V0 mode is inventory-first for endpoint scans.** Treat the
-  inventory output ("you have N components, here's what they are") as
-  the primary value of endpoint mode today. Advisory matching is
-  strongest in repo mode where lockfiles and `mcp.json` give the
-  scanner queryable package identities.
-- **A non-zero inventory line is the success signal.** "Scanned 1
-  manifest, 2 components — no findings" means the scanner saw your
-  components and matched zero advisories. "Scanned 0 manifests, 0
-  components" usually means the scanner didn't find what you
-  expected — file that as feedback.
-
-## Posture rules (--include-posture)
-
-Posture rules cover **configuration hygiene** — settings that aren't
-vulnerabilities but make the agent stack riskier to operate. They're
-off by default (because they're advisory, not vulnerability-grade)
-and excluded from `--fail-on` so they never break CI by accident.
-
-Turn them on with `--include-posture`:
+Posture findings are configuration-hygiene checks — risky settings
+that aren't vulnerabilities. Off by default, opt in with
+`--include-posture`. Never affect `--fail-on` exit codes.
 
 ```bash
-openaca scan repo --target /path/to/repo --include-posture
+uvx openaca scan repo --target /path/to/repo --include-posture
 ```
 
-V0 ships two posture rules:
+V0 ships four rules:
 
-| Rule ID | Severity | What it flags |
+| Rule | Severity | Flags |
 |---|---|---|
-| `openaca-posture-insecure-transport` | MEDIUM | MCP endpoints over plain `http://` instead of `https://`. |
-| `openaca-posture-mutable-install-reference` | LOW | Install references without a pinned version (e.g. `npx @scope/pkg` with no version, `uvx some-server`, `@latest`, branch refs). |
+| `openaca-posture-insecure-transport` | MEDIUM | MCP endpoints over plain `http://` |
+| `openaca-posture-mutable-install-reference` | LOW | Unpinned install refs (`@latest`, no version, branch refs) |
+| `openaca-posture-api-endpoint-override` | MEDIUM (HIGH with hardcoded token or model override) | Claude API endpoint overridden in `.claude/settings.json` |
+| `openaca-posture-mcp-auto-approve` | MEDIUM | MCP server with auto-approval / consent-bypass enabled |
 
-If `--include-posture` produces no output, it means none of these
-rules matched your config. It is not a no-op — see the
-`openaca-demo/posture-checks/` fixture for example output showing
-both rules firing.
+See [openaca-demo](https://github.com/open-agent-security/openaca-demo)
+for example output with both rules firing.
 
 ## Inventory glossary
 
@@ -220,54 +178,23 @@ Terms that show up in scan output and aren't always self-explanatory:
   `package.json`, `pyproject.toml`, `package-lock.json`, `uv.lock`,
   marketplace registries, etc.
 
-## What V0 covers (and what it doesn't)
+## What V0 covers
 
-### Endpoint mode sources
-
-When you run `openaca scan endpoint`, the scanner looks at:
-
-| Source | In V0 scope? |
+| Source | In scope? |
 |---|---|
-| `~/.claude/settings.json` and equivalents | Yes |
-| `~/.claude/skills/`, `~/.claude/commands/`, `~/.claude/agents/` | Yes |
-| Installed Claude Code plugins (manifest discovery) | Yes |
-| Current project's `.claude/skills/`, `.mcp.json`, plugin manifest | Yes, when `--project` is passed (opt-in; the scanner reminds you about the flag if omitted) |
-| `mcpServers` in `~/.claude/settings.json` or project `.mcp.json` | Yes |
-| Claude Desktop config | Partial (same JSON shape; not fully validated against Claude Desktop layouts yet) |
-| Cursor / Aider / Continue / Cody / other agent-host configs | Not yet |
-| MCPs registered programmatically via SDK (`query({ mcpServers: ... })`) | Not yet (V1) |
-| MCPs managed by your claude.ai account (the `claude.ai *` lines in `claude mcp list`) | Not yet — runtime state synced from claude.ai, not on-disk config |
-| Remote/marketplace MCP servers attached at runtime | Not yet |
+| `~/.claude/settings.json`, skills, commands, agents | Yes |
+| Installed Claude Code plugins | Yes |
+| Current project's `.claude/` + `.mcp.json` | Yes, with `--project` |
+| `mcpServers` (stdio + HTTP/SSE transports) | Yes |
+| Claude Desktop config | Partial |
+| Cursor / Aider / Continue / Cody / other hosts | Not yet |
+| SDK-registered MCPs (`query({ mcpServers })`) | Not yet (V1) |
+| claude.ai-managed MCPs (`claude.ai *` in `claude mcp list`) | Not yet — runtime state from your account, not on-disk |
 
-If the scan reports `0 MCP servers` and you know you have MCPs
-configured, two common reasons:
-
-- **claude.ai-managed MCPs** (Slack, Gmail, Google Drive, etc.) live
-  in your claude.ai account, not in any on-disk config file. They're
-  visible in `claude mcp list` under `claude.ai *` but aren't in V0
-  scope yet — see the table row above.
-- **SDK-registered or runtime-attached MCPs** are out of V0 scope
-  too. If you hit either case, file it as feedback so the inventory
-  boundary keeps moving.
-
-### What V0 deliberately does NOT do
-
-- **No SDK-inline parsing.** V0 reads declared manifests; it doesn't
-  parse Python or TypeScript source to find programmatically
-  registered MCP servers, tools, or hooks. Those are V1 scope.
-- **Not a general-purpose SCA scanner.** The corpus is focused on
-  agent-stack threats (malicious MCP packages, agent framework
-  vulnerabilities, AI infra). Use a general-purpose SCA tool for
-  your full dependency tree.
-- **No artifact scanning.** OpenACA doesn't unpack or analyze the
-  contents of installed skills/plugins — it identifies them and
-  matches against the advisory corpus.
-
-### What's in-flight
-
-If you find yourself wishing for something that isn't there yet —
-that's exactly the feedback I want. Coverage gaps are the most
-useful signal right now.
+V0 reads declared manifests only — no SDK-inline parsing, no artifact
+content scanning. It's not a general-purpose SCA tool; pair with one
+for your full dependency tree. Coverage gaps you hit are exactly the
+feedback I want.
 
 ## Feedback I'm looking for
 
@@ -311,9 +238,9 @@ isn't available to external testers yet.
 One paragraph is plenty. The fields I find most useful:
 
 - **Feedback type** — ergonomics / coverage gap / workflow fit
-- **Command run** — full invocation, e.g. `openaca scan endpoint
+- **Command run** — full invocation, e.g. `uvx openaca scan endpoint
   --include-posture`
-- **Version** — output of `openaca --version`
+- **Version** — output of `uvx openaca --version`
 - **Expected vs actual** — one line each
 - **Output** — redacted as needed (see the privacy note above)
 - **Inventory mismatch** — if the scanner missed something it should
@@ -321,27 +248,5 @@ One paragraph is plenty. The fields I find most useful:
 
 One filed observation is the bar. The friction signal compounds across
 the cohort.
-
-## Re-testing after a fix
-
-When I ship a new pre-release with a fix you reported, upgrade to
-the newest beta:
-
-```bash
-uv tool upgrade openaca
-```
-
-`openaca --version` will show what you just got. No need to wait for
-me to send a note — `uv tool upgrade` always fetches the latest
-available release (currently the newest pre-release).
-
-If you want to go back to the exact build you originally tested
-against (e.g., to confirm a fix actually changed behavior):
-
-```bash
-uv tool install --force openaca==<version>
-```
-
-Substitute the version that's in your bug report.
 
 — Vinod
