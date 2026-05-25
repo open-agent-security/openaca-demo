@@ -98,16 +98,9 @@ project-local skills (`.claude/skills/`), MCP configs (`.mcp.json`),
 and plugin manifests from a project, pass `--project`:
 
 ```bash
-# Include the current directory as project context.
-uvx openaca scan endpoint --project . -v
-
-# Or point at a specific project directory.
+# Include a specific directory as project context.
 uvx openaca scan endpoint --project /path/to/your/agent-project -v
 ```
-
-The scanner prints a one-line reminder on every endpoint scan that
-omits `--project`, so you don't need to memorize the flag — it'll
-tell you. The reminder is suppressed once you pass `--project`.
 
 ### Repo mode
 
@@ -120,24 +113,12 @@ install:
 uvx openaca scan repo --target /path/to/your/repo -v
 ```
 
-### Common flags (both modes)
-
-- `--sarif results.sarif` — SARIF output for CI integration.
-- `--format github` — GitHub Actions annotations.
-- `--format json` — JSON to stdout (informational lines go to stderr,
-  so the JSON stays clean for piping).
-- `--fail-on high|medium|low|none` — exit-code policy (default: `any`).
-- `--include-posture` — opt-in to configuration-hygiene rules (see
-  the "Posture rules" section below). Off by default.
-
 ## What "no findings" means
 
 "No findings" means **no matching OpenACA overlay or OSV advisory for
 the components OpenACA could identify** — not that your environment
 is safe. The non-zero inventory line ("Scanned N manifests, M
-components") is the success signal that the scanner saw something;
-zero inventory usually means the scanner didn't find what you
-expected, which is worth reporting back.
+components") is the success signal that the scanner saw something.
 
 ## Optional: posture findings
 
@@ -162,8 +143,6 @@ See [openaca-demo](https://github.com/open-agent-security/openaca-demo)
 for example output with both rules firing.
 
 ## Inventory glossary
-
-Terms that show up in scan output and aren't always self-explanatory:
 
 - **Active plugin** — an enabled Claude Code plugin (installed via
   marketplace, manifest, etc.) and the skills, commands, hooks, or
@@ -217,23 +196,12 @@ than the polish.
 ## Privacy & redaction
 
 OpenACA runs locally and doesn't send scan data anywhere. But when
-you report back, your scan output may contain internal package
-names, paths, or component IDs you don't want public:
-
-- **Redact freely.** Replace internal names with `<redacted>` or
-  generic placeholders. The shape of the output is more useful than
-  the literal contents.
-- **SARIF is sometimes easier to redact than text** — it's structured
-  JSON, you can drop or rename specific entries cleanly. Run with
-  `--sarif results.sarif --format json` and edit before sending.
-- **For sensitive output, DM beats filing in public** (see the
-  "How to report" section below for the DM path).
+you report back, feel free to redact any sensitive / private data
 
 ## How to report
 
 DM me — email vinodkone@gmail.com, or whatever channel we already
-use. The repo is private during this beta, so a GitHub issue path
-isn't available to external testers yet.
+use. 
 
 One paragraph is plenty. The fields I find most useful:
 
@@ -245,8 +213,3 @@ One paragraph is plenty. The fields I find most useful:
 - **Output** — redacted as needed (see the privacy note above)
 - **Inventory mismatch** — if the scanner missed something it should
   have inventoried, name what + where
-
-One filed observation is the bar. The friction signal compounds across
-the cohort.
-
-— Vinod
