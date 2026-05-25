@@ -120,6 +120,36 @@ the components OpenACA could identify** — not that your environment
 is safe. The non-zero inventory line ("Scanned N manifests, M
 components") is the success signal that the scanner saw something.
 
+## Optional: Use OpenACA inside Claude Code
+
+If you use Claude Code, you can install the OpenACA plugin for an
+inline experience. The plugin is a thin wrapper around the same
+`uvx openaca` CLI commands above — it gives Claude four namespaced
+slash commands to invoke scans, generate BOMs, and explain findings
+without leaving the chat.
+
+Install (requires `openaca` >= 0.1.0b5, which `uvx openaca` pulls
+automatically):
+
+```text
+/plugin marketplace add open-agent-security/openaca-claude-plugin
+/plugin install openaca@openaca
+/reload-plugins
+```
+
+Commands available after install:
+
+- `/openaca:scan` — run an endpoint or repo scan
+- `/openaca:bom` — generate an Agent BOM
+- `/openaca:explain` — explain a finding in conversation
+- `/openaca:triage` — guided review after agent config changes
+
+The plugin is explicit-invocation only — no hooks, no background
+monitors, no auto-modification of Claude Code settings, no upload
+of local config anywhere.
+
+Full plugin docs: https://github.com/open-agent-security/openaca-claude-plugin
+
 ## Optional: posture findings
 
 Posture findings are configuration-hygiene checks — risky settings
