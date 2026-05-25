@@ -230,8 +230,7 @@ you report back, feel free to redact any sensitive / private data
 
 ## How to report
 
-DM me — email vinodkone@gmail.com, or whatever channel we already
-use. 
+DM me on whatever channel we already use. 
 
 One paragraph is plenty. The fields I find most useful:
 
