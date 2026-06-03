@@ -25,9 +25,9 @@ step.
 
 ## Fixtures
 
-Each subdirectory is a self-contained MCP project. `cd` into one and
-run `uvx openaca scan repo --target .` to see what the scanner does on
-that scenario.
+Each subdirectory is a self-contained agent/MCP project. `cd` into one
+and run `uvx openaca scan repo --target .` to see what the scanner does
+on that scenario.
 
 ### `sample-mcp/` — vulnerability finding
 
@@ -103,11 +103,59 @@ Posture findings (configuration hygiene):
 (Exact wording may shift across pre-release builds; the rule IDs are
 stable.)
 
+### `playwright-plugin/` — plugin attribution graph
+
+A Claude Code plugin-shaped fixture that bundles the Playwright MCP
+server pinned to a vulnerable historical version. This mirrors the
+official Playwright plugin shape but pins the MCP runtime package so
+the advisory match is deterministic.
+
+```bash
+cd playwright-plugin
+uvx openaca scan repo --target . -v
+```
+
+Expected inventory shape:
+
+```
+repo openaca-demo/playwright-plugin
+└── claude-plugin/playwright  [! bundles: GHSA-6fg3-hvw7-2fwq]
+    └── MCPs/ (1)
+        └── @playwright/mcp@0.0.39 (stdio via npx) (from .mcp.json)  [! GHSA-6fg3-hvw7-2fwq]
+```
+
+Expected finding:
+
+```
+Found 1 vulnerability in 1 package.
+
+@playwright/mcp 0.0.39
+  path:     claude-plugin/playwright -> @playwright/mcp
+  via:      claude-plugin/playwright
+
+  HIGH  GHSA-6fg3-hvw7-2fwq  fixed in 0.0.40  Microsoft Playwright MCP Server vulnerable to DNS Rebinding Attack; Allows Attackers Access to All Server Tools  [osv.dev]
+```
+
+For contrast, package-manifest-only scanners will not find package
+sources in this fixture because the vulnerable runtime is declared in
+agent configuration, not in `package.json` or a lockfile:
+
+```bash
+trivy filesystem playwright-plugin --scanners vuln
+```
+
+Expected summary:
+
+```
+Supported files for scanner(s) not found.
+```
+
 ## Full-repo demo
 
 Scan the whole repo with verbose output and `--include-posture` to
-exercise four V0 capabilities in one run: vulnerability matching, OSV
-federation, source-less remote MCP inventory, and posture findings.
+exercise five V0 capabilities in one run: vulnerability matching, OSV
+federation, plugin attribution, source-less remote MCP inventory, and
+posture findings.
 
 ```bash
 uvx openaca scan repo --target . -v --include-posture
@@ -117,20 +165,24 @@ Expected output:
 
 ```
 loaded 107 OpenACA overlay(s)
-scanned 3 manifest(s), 5 component(s):
+federation: queried 3 target(s) on osv.dev; fetched 2 advisory record(s)
+federation: skipped 4 ref(s) without supported OSV.dev query (mcp_server=3, plugin=1)
+matched 2 finding(s):
+  pkg:npm/%40playwright/mcp@0.0.39 → GHSA-6fg3-hvw7-2fwq (high) via claude-plugin/playwright
+  pkg:npm/%40cyanheads/git-mcp-server@1.1.0 → GHSA-3q26-f695-pp76 (high)
 repo openaca-demo
+├── claude-plugin/playwright  [! bundles: GHSA-6fg3-hvw7-2fwq]
+│   └── MCPs/ (1)
+│       └── @playwright/mcp@0.0.39 (stdio via npx) (from playwright-plugin/.mcp.json)  [! GHSA-6fg3-hvw7-2fwq]
 └── direct components/
     └── MCPs/ (5)
         ├── @cyanheads/git-mcp-server@1.1.0 (stdio via npx)  [! GHSA-3q26-f695-pp76]
         ├── @cyanheads/git-mcp-server@2.1.5 (stdio via npx)
+        ├── @modelcontextprotocol/server-filesystem (stdio via npx, unpinned)
         ├── http://example.com/mcp (SSE)
-        ├── npx (stdio, args hidden)
-        └── uvx (stdio, args hidden)
-federation: queried 2 PURL(s) on osv.dev; fetched 1 advisory record(s)
-federation: skipped 3 ref(s) without queryable PURL (mcp_server=3)
-matched 1 finding(s):
-  pkg:npm/%40cyanheads/git-mcp-server@1.1.0 → GHSA-3q26-f695-pp76 (high)
-Found 1 vulnerability in 1 package.
+        └── some-mcp-server (stdio via uvx, unpinned)
+
+Found 2 vulnerabilities in 2 packages.
 
 @cyanheads/git-mcp-server 1.1.0
   location: sample-mcp/mcp.json
@@ -145,7 +197,17 @@ Found 1 vulnerability in 1 package.
         Active in: claude-code
         Declared by: sample-mcp/mcp.json
 
-Scanned 3 manifests, 5 components. Sources: osv.dev.
+@playwright/mcp 0.0.39
+  location: playwright-plugin/.mcp.json
+  path:     claude-plugin/playwright -> @playwright/mcp
+  via:      claude-plugin/playwright
+  fix:      upgrade or remove claude-plugin/playwright
+
+  HIGH  GHSA-6fg3-hvw7-2fwq  fixed in 0.0.40  Microsoft Playwright MCP Server vulnerable to DNS Rebinding Attack; Allows Attackers Access to All Server Tools  [osv.dev]
+        confidence: high
+        Component: mcp_server playwright
+        Source: pkg:npm/%40playwright/mcp@0.0.39
+        Declared by: playwright-plugin/.mcp.json
 
 Posture findings (configuration hygiene):
 
@@ -163,12 +225,19 @@ Posture findings (configuration hygiene):
        location: posture-checks/mcp.json
        fix:      Pin the install reference to an exact version, commit SHA, or Docker digest. Mutable refs (no version, @latest, branch refs, missing digest) can roll forward to unexpected code at any time.
        standards: CWE-1357, Pinned-Dependencies, immutable-references, asi04, mcp04:2025
+
+Summary
+  Scanned 5 manifests, 7 components · advisories: 2 · posture: 3
+  sources: osv.dev
 ```
 
 ### What's worth noticing
 
-- **One vulnerability matched** against the OpenACA + OSV corpus. The
+- **Two vulnerabilities matched** against the OpenACA + OSV corpus. The
   same package at `@2.1.5` is clean — one version bump closes it.
+- **The Playwright finding rolls up through the plugin graph.** The
+  plugin header says it bundles `GHSA-6fg3-hvw7-2fwq`, and the MCP leaf
+  shows the direct package match.
 - **The SSE endpoint** at `example.com/mcp` is inventoried but not
   federation-queryable. Remote MCPs don't have queryable PURLs by
   design; they match only against OpenACA-curated overlays that
@@ -176,15 +245,15 @@ Posture findings (configuration hygiene):
 - **Two stdio MCPs with unpinned install references** surface only
   as posture findings (LOW severity), never as vulnerabilities.
   Without `--include-posture` these are invisible.
-- **The federation line** reports that 2 PURLs were queried on OSV
-  and 3 refs were skipped — honest signal about coverage scope.
-  Advisory federation works for package-pinned stdio MCPs; remote
-  and unpinned MCPs rely on OpenACA's overlay corpus.
+- **The federation line** reports that 3 targets were queried on OSV
+  and 4 refs were skipped — honest signal about coverage scope.
+  Advisory federation works for package-pinned stdio MCPs and lockfile
+  dependencies; remote and unpinned MCPs rely on OpenACA's overlay
+  corpus or posture checks.
 
-## Why these three
+## Why these fixtures
 
-Three small fixtures cover the three things a beta tester wants to
-see early:
+These small fixtures cover the things a beta tester wants to see early:
 
 1. **The scanner finds real vulnerabilities** (sample-mcp).
 2. **A clean scan still gives confidence the tool ran** (clean-scan —
@@ -192,6 +261,8 @@ see early:
    reading like a broken scan).
 3. **The configuration-hygiene rules work and are opt-in**
    (posture-checks).
+4. **Vulnerable MCP runtime packages are attributed to the plugin that
+   bundles them** (playwright-plugin).
 
 After running these, point OpenACA at one of your own repos or your
 Claude Code install (`uvx openaca scan endpoint`) and send feedback to

@@ -75,6 +75,21 @@ fix). For the fuller demo — remote MCP inventory, OSV federation
 details, and posture findings end-to-end — see the
 [openaca-demo README](https://github.com/open-agent-security/openaca-demo).
 
+To see plugin attribution as well, run the Playwright plugin fixture:
+
+```bash
+uvx openaca scan repo --target playwright-plugin -v
+```
+
+That fixture shows a vulnerability on an MCP runtime package rolling up
+through the plugin that bundles it:
+
+```text
+claude-plugin/playwright  [! bundles: GHSA-6fg3-hvw7-2fwq]
+└── MCPs/ (1)
+    └── @playwright/mcp@0.0.39  [! GHSA-6fg3-hvw7-2fwq]
+```
+
 ## Scan your own environment
 
 Once you've seen the demo run, point OpenACA at one of your own
