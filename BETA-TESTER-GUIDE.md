@@ -52,12 +52,25 @@ repo so you know what a real finding looks like.
 ```bash
 git clone https://github.com/open-agent-security/openaca-demo.git
 cd openaca-demo
-uvx openaca scan repo --target sample-mcp
+uvx openaca scan repo --target sample-mcp --fail-on none
 ```
 
 Expected output:
 
 ```
+Target
+  host surface: repository
+  path: sample-mcp
+
+Inventory
+
+repo sample-mcp
+└── direct components/
+    └── MCPs/ (1)
+        └── @cyanheads/git-mcp-server@1.1.0 (stdio via npx) (from mcp.json)  [! GHSA-3q26-f695-pp76]
+
+Findings
+
 Found 1 vulnerability in 1 package.
 
 @cyanheads/git-mcp-server 1.1.0
@@ -66,7 +79,12 @@ Found 1 vulnerability in 1 package.
 
   HIGH  GHSA-3q26-f695-pp76  fixed in 2.1.5  @cyanheads/git-mcp-server vulnerable to command injection in several tools  [osv.dev]
 
-Scanned 1 manifest, 1 component. Sources: osv.dev.
+Summary
+  Scanned 1 manifest, 1 component · advisories: 1 · posture: skipped
+  sources: osv.dev
+
+Next
+  emit Agent BOM: openaca bom repo --target sample-mcp --output openaca-bom.json
 ```
 
 That confirms install + advisory matching are working, and shows the
@@ -78,16 +96,22 @@ details, and posture findings end-to-end — see the
 To see plugin attribution as well, run the Playwright plugin fixture:
 
 ```bash
-uvx openaca scan repo --target playwright-plugin -v
+uvx openaca scan repo --target playwright-plugin -v --fail-on none
 ```
 
 That fixture shows a vulnerability on an MCP runtime package rolling up
-through the plugin that bundles it:
+through the plugin that bundles it. Expected excerpt:
 
 ```text
 claude-plugin/playwright  [! bundles: GHSA-6fg3-hvw7-2fwq]
 └── MCPs/ (1)
     └── @playwright/mcp@0.0.39  [! GHSA-6fg3-hvw7-2fwq]
+
+@playwright/mcp 0.0.39
+  location: playwright-plugin/.mcp.json
+  path:     claude-plugin/playwright -> @playwright/mcp
+  via:      claude-plugin/playwright
+  fix:      upgrade or remove claude-plugin/playwright
 ```
 
 ## Scan your own environment
@@ -143,7 +167,7 @@ inline experience. The plugin is a thin wrapper around the same
 slash commands to invoke scans, generate BOMs, and explain findings
 without leaving the chat.
 
-Install (requires `openaca` >= 0.1.0b5, which `uvx openaca` pulls
+Install (requires `openaca` >= 0.1.0b6, which `uvx openaca` pulls
 automatically):
 
 ```text
