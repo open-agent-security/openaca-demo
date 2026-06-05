@@ -1,8 +1,7 @@
 # openaca-demo
 
-Sample manifests for trying out OpenACA. Scan them with
-`uvx openaca scan repo --target <fixture>` — `uvx` fetches OpenACA
-on the fly, no install step needed.
+Sample manifests for trying out OpenACA. The examples below use
+`openaca` as a shell function for the latest published OpenACA pre-release.
 
 If you're a closed-beta tester, read the
 [**beta-tester guide**](./BETA-TESTER-GUIDE.md) first — it covers
@@ -18,15 +17,17 @@ Then:
 ```bash
 git clone https://github.com/open-agent-security/openaca-demo.git
 cd openaca-demo
+openaca() { uvx --prerelease allow --from openaca openaca "$@"; }
+openaca --version
 ```
 
-`uvx openaca ...` fetches OpenACA on the fly; no separate install
-step.
+The function fetches the latest published OpenACA pre-release on demand;
+no separate install step is needed.
 
 ## Fixtures
 
 Each subdirectory is a self-contained agent/MCP project. `cd` into one
-and run `uvx openaca scan repo --target .` to see what the scanner does
+and run `openaca scan repo --target .` to see what the scanner does
 on that scenario.
 
 ### `sample-mcp/` — vulnerability finding
@@ -36,12 +37,25 @@ should produce a HIGH-severity finding against `GHSA-3q26-f695-pp76`.
 
 ```bash
 cd sample-mcp
-uvx openaca scan repo --target .
+openaca scan repo --target . --fail-on none
 ```
 
 Expected output:
 
 ```
+Target
+  host surface: repository
+  path: .
+
+Inventory
+
+repo .
+└── direct components/
+    └── MCPs/ (1)
+        └── @cyanheads/git-mcp-server@1.1.0 (stdio via npx) (from mcp.json)  [! GHSA-3q26-f695-pp76]
+
+Findings
+
 Found 1 vulnerability in 1 package.
 
 @cyanheads/git-mcp-server 1.1.0
@@ -50,7 +64,12 @@ Found 1 vulnerability in 1 package.
 
   HIGH  GHSA-3q26-f695-pp76  fixed in 2.1.5  @cyanheads/git-mcp-server vulnerable to command injection in several tools  [osv.dev]
 
-Scanned 1 manifest, 1 component. Sources: osv.dev.
+Summary
+  Scanned 1 manifest, 1 component · advisories: 1 · posture: skipped
+  sources: osv.dev
+
+Next
+  emit Agent BOM: openaca bom repo --target . --output openaca-bom.json
 ```
 
 ### `clean-scan/` — no findings (same package, fixed version)
@@ -61,14 +80,35 @@ finding from the previous fixture.
 
 ```bash
 cd clean-scan
-uvx openaca scan repo --target .
+openaca scan repo --target . --fail-on none
 ```
 
 Expected output:
 
 ```
-Scanned 1 manifest, 1 component — no findings.
-OpenACA scans agent composition; for general software dependency scans, use a general-purpose SCA scanner.
+Target
+  host surface: repository
+  path: .
+
+Inventory
+
+repo .
+└── direct components/
+    └── MCPs/ (1)
+        └── @cyanheads/git-mcp-server@2.1.5 (stdio via npx) (from mcp.json)
+
+Findings
+
+  No advisories matched the scanned components.
+  OpenACA scans agent composition; for general software dependency scans,
+  use a general-purpose SCA scanner.
+
+Summary
+  Scanned 1 manifest, 1 component · advisories: 0 · posture: skipped
+  sources: (none)
+
+Next
+  emit Agent BOM: openaca bom repo --target . --output openaca-bom.json
 ```
 
 ### `posture-checks/` — configuration hygiene findings
@@ -79,14 +119,31 @@ with `--include-posture` to see them.
 
 ```bash
 cd posture-checks
-uvx openaca scan repo --target . --include-posture --fail-on none
+openaca scan repo --target . --include-posture --fail-on none
 ```
 
 Expected output — no vulnerability findings, but three posture
 findings on the configuration hygiene side:
 
 ```
-Scanned 1 manifest, 2 components — no findings.
+Target
+  host surface: repository
+  path: .
+
+Inventory
+
+repo .
+└── direct components/
+    └── MCPs/ (3)
+        ├── @modelcontextprotocol/server-filesystem (stdio via npx, unpinned) (from mcp.json)
+        ├── http://example.com/mcp (SSE) (from mcp.json)
+        └── some-mcp-server (stdio via uvx, unpinned) (from mcp.json)
+
+Findings
+
+  No advisories matched the scanned components.
+  OpenACA scans agent composition; for general software dependency scans,
+  use a general-purpose SCA scanner.
 
 Posture findings (configuration hygiene):
 
@@ -98,6 +155,13 @@ Posture findings (configuration hygiene):
 
   LOW  openaca-posture-mutable-install-reference  mcp-stdio/uvx-unpinned:some-mcp-server
        fix:      Pin the install reference to an exact version, commit SHA, or Docker digest.
+
+Summary
+  Scanned 1 manifest, 3 components · advisories: 0 · posture: 3
+  sources: (none)
+
+Next
+  emit Agent BOM: openaca bom repo --target . --output openaca-bom.json
 ```
 
 (Exact wording may shift across pre-release builds; the rule IDs are
@@ -112,13 +176,13 @@ the advisory match is deterministic.
 
 ```bash
 cd playwright-plugin
-uvx openaca scan repo --target . -v
+openaca scan repo --target . -v --fail-on none
 ```
 
 Expected inventory shape:
 
 ```
-repo openaca-demo/playwright-plugin
+repo .
 └── claude-plugin/playwright  [! bundles: GHSA-6fg3-hvw7-2fwq]
     └── MCPs/ (1)
         └── @playwright/mcp@0.0.39 (stdio via npx) (from .mcp.json)  [! GHSA-6fg3-hvw7-2fwq]
@@ -158,7 +222,7 @@ federation, plugin attribution, source-less remote MCP inventory, and
 posture findings.
 
 ```bash
-uvx openaca scan repo --target . -v --include-posture
+openaca scan repo --target . -v --include-posture --fail-on none
 ```
 
 Expected output:
@@ -166,21 +230,33 @@ Expected output:
 ```
 loaded 107 OpenACA overlay(s)
 federation: queried 3 target(s) on osv.dev; fetched 2 advisory record(s)
+  pkg:npm/%40cyanheads/git-mcp-server@2.1.5
+  pkg:npm/%40playwright/mcp@0.0.39
+  pkg:npm/%40cyanheads/git-mcp-server@1.1.0
 federation: skipped 4 ref(s) without supported OSV.dev query (mcp_server=3, plugin=1)
 matched 2 finding(s):
   pkg:npm/%40playwright/mcp@0.0.39 → GHSA-6fg3-hvw7-2fwq (high) via claude-plugin/playwright
   pkg:npm/%40cyanheads/git-mcp-server@1.1.0 → GHSA-3q26-f695-pp76 (high)
-repo openaca-demo
+
+Target
+  host surface: repository
+  path: .
+
+Inventory
+
+repo .
 ├── claude-plugin/playwright  [! bundles: GHSA-6fg3-hvw7-2fwq]
 │   └── MCPs/ (1)
 │       └── @playwright/mcp@0.0.39 (stdio via npx) (from playwright-plugin/.mcp.json)  [! GHSA-6fg3-hvw7-2fwq]
 └── direct components/
     └── MCPs/ (5)
-        ├── @cyanheads/git-mcp-server@1.1.0 (stdio via npx)  [! GHSA-3q26-f695-pp76]
-        ├── @cyanheads/git-mcp-server@2.1.5 (stdio via npx)
-        ├── @modelcontextprotocol/server-filesystem (stdio via npx, unpinned)
-        ├── http://example.com/mcp (SSE)
-        └── some-mcp-server (stdio via uvx, unpinned)
+        ├── @cyanheads/git-mcp-server@1.1.0 (stdio via npx) (from sample-mcp/mcp.json)  [! GHSA-3q26-f695-pp76]
+        ├── @cyanheads/git-mcp-server@2.1.5 (stdio via npx) (from clean-scan/mcp.json)
+        ├── @modelcontextprotocol/server-filesystem (stdio via npx, unpinned) (from posture-checks/mcp.json)
+        ├── http://example.com/mcp (SSE) (from posture-checks/mcp.json)
+        └── some-mcp-server (stdio via uvx, unpinned) (from posture-checks/mcp.json)
+
+Findings
 
 Found 2 vulnerabilities in 2 packages.
 
@@ -229,6 +305,9 @@ Posture findings (configuration hygiene):
 Summary
   Scanned 5 manifests, 7 components · advisories: 2 · posture: 3
   sources: osv.dev
+
+Next
+  emit Agent BOM: openaca bom repo --target . --output openaca-bom.json
 ```
 
 ### What's worth noticing
@@ -265,10 +344,10 @@ These small fixtures cover the things a beta tester wants to see early:
    bundles them** (playwright-plugin).
 
 After running these, point OpenACA at one of your own repos or your
-Claude Code install (`uvx openaca scan endpoint`) and send feedback to
-the maintainer (vinodkone@gmail.com, or whatever channel you already
-use). The openaca repo is private during the closed beta, so GitHub
-issues aren't open to external testers yet — DM is the path.
+Claude Code install (`openaca scan endpoint`) and send feedback to the maintainer (vinodkone@gmail.com,
+or whatever channel you already use). The openaca repo is private
+during the closed beta, so GitHub issues aren't open to external
+testers yet — DM is the path.
 
 ## License
 
