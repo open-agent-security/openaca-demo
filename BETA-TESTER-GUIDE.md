@@ -31,10 +31,17 @@ is below in "Feedback I'm looking for."
 ## Quick start
 
 You need [uv](https://docs.astral.sh/uv/getting-started/installation/).
+For one-shot beta testing, define this shell function once:
+
+```bash
+openaca() { uvx --prerelease allow --from openaca openaca "$@"; }
+openaca --version
+```
+
 Then:
 
 ```bash
-uvx openaca scan endpoint -v
+openaca scan endpoint -v
 ```
 
 This runs OpenACA against your Claude Code endpoint with verbose
@@ -52,7 +59,7 @@ repo so you know what a real finding looks like.
 ```bash
 git clone https://github.com/open-agent-security/openaca-demo.git
 cd openaca-demo
-uvx openaca scan repo --target sample-mcp --fail-on none
+openaca scan repo --target sample-mcp --fail-on none
 ```
 
 Expected output:
@@ -96,7 +103,7 @@ details, and posture findings end-to-end — see the
 To see plugin attribution as well, run the Playwright plugin fixture:
 
 ```bash
-uvx openaca scan repo --target playwright-plugin -v --fail-on none
+openaca scan repo --target playwright-plugin -v --fail-on none
 ```
 
 That fixture shows a vulnerability on an MCP runtime package rolling up
@@ -129,7 +136,7 @@ Scans your installed Claude Code endpoint (`~/.claude` or
 `$CLAUDE_CONFIG_DIR`):
 
 ```bash
-uvx openaca scan endpoint -v
+openaca scan endpoint -v
 ```
 
 This scans **only your user-level Claude config**. To also include
@@ -138,7 +145,7 @@ and plugin manifests from a project, pass `--project`:
 
 ```bash
 # Include a specific directory as project context.
-uvx openaca scan endpoint --project /path/to/your/agent-project -v
+openaca scan endpoint --project /path/to/your/agent-project -v
 ```
 
 ### Repo mode
@@ -149,7 +156,7 @@ registries, lockfiles, etc.) without touching your user-level Claude
 install:
 
 ```bash
-uvx openaca scan repo --target /path/to/your/repo -v
+openaca scan repo --target /path/to/your/repo -v
 ```
 
 ## What "no findings" means
@@ -162,13 +169,11 @@ components") is the success signal that the scanner saw something.
 ## Optional: Use OpenACA inside Claude Code
 
 If you use Claude Code, you can install the OpenACA plugin for an
-inline experience. The plugin is a thin wrapper around the same
-`uvx openaca` CLI commands above — it gives Claude four namespaced
-slash commands to invoke scans, generate BOMs, and explain findings
-without leaving the chat.
+inline experience. The plugin gives Claude four namespaced slash
+commands to invoke scans, generate BOMs, and explain findings without
+leaving the chat.
 
-Install (requires `openaca` >= 0.1.0b6, which `uvx openaca` pulls
-automatically):
+Install:
 
 ```text
 /plugin marketplace add open-agent-security/openaca-claude-plugin
@@ -196,7 +201,7 @@ that aren't vulnerabilities. Off by default, opt in with
 `--include-posture`. Never affect `--fail-on` exit codes.
 
 ```bash
-uvx openaca scan repo --target /path/to/repo --include-posture
+openaca scan repo --target /path/to/repo --include-posture
 ```
 
 V0 ships four rules:
@@ -274,9 +279,8 @@ DM me on whatever channel we already use.
 One paragraph is plenty. The fields I find most useful:
 
 - **Feedback type** — ergonomics / coverage gap / workflow fit
-- **Command run** — full invocation, e.g. `uvx openaca scan endpoint
-  --include-posture`
-- **Version** — output of `uvx openaca --version`
+- **Command run** — full invocation, e.g. `openaca scan endpoint --include-posture`
+- **Version** — output of `openaca --version`
 - **Expected vs actual** — one line each
 - **Output** — redacted as needed (see the privacy note above)
 - **Inventory mismatch** — if the scanner missed something it should
