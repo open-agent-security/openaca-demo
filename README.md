@@ -17,7 +17,7 @@ Then:
 ```bash
 git clone https://github.com/open-agent-security/openaca-demo.git
 cd openaca-demo
-openaca() { uvx --prerelease allow --from openaca openaca "$@"; }
+openaca() { uvx --from openaca openaca "$@"; }
 openaca --version
 ```
 
