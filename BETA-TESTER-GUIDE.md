@@ -34,7 +34,7 @@ You need [uv](https://docs.astral.sh/uv/getting-started/installation/).
 For one-shot beta testing, define this shell function once:
 
 ```bash
-openaca() { uvx --prerelease allow --from openaca openaca "$@"; }
+openaca() { uvx --from openaca openaca "$@"; }
 openaca --version
 ```
 
