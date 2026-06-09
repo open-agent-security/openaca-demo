@@ -110,15 +110,14 @@ That fixture shows a vulnerability on an MCP runtime package rolling up
 through the plugin that bundles it. Expected excerpt:
 
 ```text
-claude-plugin/playwright  [! bundles: GHSA-6fg3-hvw7-2fwq]
+plugin/playwright  [! bundles: GHSA-6fg3-hvw7-2fwq]
 └── MCPs/ (1)
     └── @playwright/mcp@0.0.39  [! GHSA-6fg3-hvw7-2fwq]
 
 @playwright/mcp 0.0.39
-  location: playwright-plugin/.mcp.json
-  path:     claude-plugin/playwright -> @playwright/mcp
-  via:      claude-plugin/playwright
-  fix:      upgrade or remove claude-plugin/playwright
+  path:     plugin/playwright -> @playwright/mcp
+  via:      plugin/playwright
+  fix:      upgrade or remove plugin/playwright
 ```
 
 ## Scan your own environment
