@@ -3,11 +3,11 @@
 Sample manifests for trying out OpenACA. The examples below use
 `openaca` as a shell function for the latest published OpenACA pre-release.
 
-If you're a closed-beta tester, read the
-[**beta-tester guide**](./BETA-TESTER-GUIDE.md) first — it covers
-install, first scan, what feedback I'm looking for, and how to
-report. This repo gives you a few stable targets to point the
-scanner at while you're getting your bearings.
+New to OpenACA? Start with the
+[**openaca README**](https://github.com/open-agent-security/openaca#readme)
+for install, scan modes, and the Claude Code plugin. This repo gives
+you a few stable targets to point the scanner at while you're getting
+your bearings.
 
 ## Setup
 
@@ -377,7 +377,7 @@ plugin-rooted manifest currently prints its full path there.)
 
 ## Why these fixtures
 
-These small fixtures cover the things a beta tester wants to see early:
+These small fixtures cover the things a first-time user wants to see early:
 
 1. **The scanner finds real vulnerabilities** (sample-mcp).
 2. **A clean scan still gives confidence the tool ran** (clean-scan —
@@ -389,10 +389,9 @@ These small fixtures cover the things a beta tester wants to see early:
    bundles them** (playwright-plugin).
 
 After running these, point OpenACA at one of your own repos or your
-Claude Code install (`openaca scan endpoint`) and send feedback to the maintainer (vinodkone@gmail.com,
-or whatever channel you already use). The openaca repo is private
-during the closed beta, so GitHub issues aren't open to external
-testers yet — DM is the path.
+Claude Code install (`openaca scan endpoint`). Bugs, surprising
+output, or coverage gaps: open an issue on
+[open-agent-security/openaca](https://github.com/open-agent-security/openaca/issues).
 
 ## License
 
