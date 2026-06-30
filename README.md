@@ -65,7 +65,7 @@ Found 1 vulnerability in 1 package.
   HIGH  GHSA-3q26-f695-pp76  fixed in 2.1.5  @cyanheads/git-mcp-server vulnerable to command injection in several tools  [osv.dev]
 
 Summary
-  Scanned 1 manifest, 1 component · advisories: 1 · posture: skipped
+  Scanned 1 manifest, 1 component · advisories: 1 · posture: skipped · observations: 0
   sources: osv.dev
 
 Next
@@ -104,7 +104,7 @@ Findings
   use a general-purpose SCA scanner.
 
 Summary
-  Scanned 1 manifest, 1 component · advisories: 0 · posture: skipped
+  Scanned 1 manifest, 1 component · advisories: 0 · posture: skipped · observations: 0
   sources: (none)
 
 Next
@@ -171,7 +171,7 @@ Posture findings (configuration hygiene):
        standards: CWE-1357, Pinned-Dependencies, immutable-references, asi04, mcp04:2025
 
 Summary
-  Scanned 1 manifest, 3 components · advisories: 2 · posture: 3
+  Scanned 1 manifest, 3 components · advisories: 2 · posture: 3 · observations: 0
   sources: osv.dev
 
 Next
@@ -208,7 +208,7 @@ Expected finding:
 Found 1 vulnerability in 1 package.
 
 @playwright/mcp 0.0.39
-  path:     plugin/playwright -> @playwright/mcp
+  path:     plugin playwright -> mcp_server playwright
   via:      plugin/playwright
   fix:      upgrade or remove plugin/playwright
 
@@ -311,7 +311,7 @@ Found 4 vulnerabilities in 3 packages.
 
 @playwright/mcp 0.0.39
   location: <demo-repo>/playwright-plugin/.mcp.json
-  path:     plugin/playwright -> @playwright/mcp
+  path:     plugin playwright -> mcp_server playwright
   via:      plugin/playwright
   fix:      upgrade or remove plugin/playwright
 
@@ -319,7 +319,9 @@ Found 4 vulnerabilities in 3 packages.
         confidence: high
         Component: mcp_server playwright
         Source: pkg:npm/%40playwright/mcp@0.0.39
-        Declared by: <demo-repo>/playwright-plugin/.mcp.json
+        Active in: claude-code
+        Declared by: plugin "playwright"
+        Path: plugin playwright -> mcp_server playwright
 
 Posture findings (configuration hygiene):
 
@@ -339,7 +341,7 @@ Posture findings (configuration hygiene):
        standards: CWE-1357, Pinned-Dependencies, immutable-references, asi04, mcp04:2025
 
 Summary
-  Scanned 5 manifests, 7 components · advisories: 4 · posture: 3
+  Scanned 5 manifests, 7 components · advisories: 4 · posture: 3 · observations: 0
   sources: osv.dev
 
 Next
