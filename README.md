@@ -30,6 +30,10 @@ Each subdirectory is a self-contained agent/MCP project. `cd` into one
 and run `openaca scan repo --target .` to see what the scanner does
 on that scenario.
 
+For testers with a real Claude Code endpoint, the [`policy/`](./policy/)
+directory contains copyable policies and a manual verification sequence for
+MCP admission, explicit plugin blocks, and standalone-skill blocks.
+
 ### `sample-mcp/` — vulnerability finding
 
 A single MCP server pinned to a vulnerable version. Scanning this
