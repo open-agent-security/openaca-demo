@@ -1,0 +1,15 @@
+version: 1
+
+admission:
+  mcps:
+    default: blocked
+    allowed:
+      - command: ["replace-command", "replace-allowed-argument"]
+    blocked:
+      - command: ["replace-command", "replace-blocked-argument"]
+
+  plugins:
+    default: allowed
+
+  skills:
+    default: allowed

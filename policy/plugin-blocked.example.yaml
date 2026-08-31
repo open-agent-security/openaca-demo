@@ -1,0 +1,13 @@
+version: 1
+
+admission:
+  mcps:
+    default: allowed
+
+  plugins:
+    default: allowed
+    blocked:
+      - plugin: "replace-me@marketplace"
+
+  skills:
+    default: allowed
