@@ -26,9 +26,14 @@ no separate install step is needed.
 
 ## Fixtures
 
-Each subdirectory is a self-contained agent/MCP project. `cd` into one
-and run `openaca scan repo --target .` to see what the scanner does
-on that scenario.
+Each subdirectory is a self-contained Claude Code project that declares its
+MCP servers in a `.mcp.json`. `cd` into one and run
+`openaca scan repo --target .` to see what the scanner does on that scenario.
+
+The filename matters: since openaca 0.5.0 a repository scan reports the
+agents a repo *declares*, and a bare `mcp.json` declares none — Claude Code
+owns `.mcp.json`, so that is the surface the scanner reads. A directory with
+only `mcp.json` prints `declares no agent` and an empty inventory.
 
 For testers with a real Claude Code endpoint, the [`policy/`](./policy/)
 directory contains copyable policies and a manual verification sequence for
@@ -48,32 +53,34 @@ Expected output:
 
 ```
 Target
-  host surface: repository
+  host surface: Claude Code
   path: .
+  coverage: complete
 
 Inventory
 
-repo .
+Claude Code
 └── direct components/
     └── MCPs/ (1)
-        └── @cyanheads/git-mcp-server@1.1.0 (stdio via npx) (from mcp.json)  [! GHSA-3q26-f695-pp76]
+        └── @cyanheads/git-mcp-server@1.1.0 (stdio via npx) (from .mcp.json)  [! GHSA-3q26-f695-pp76]
 
 Findings
 
 Found 1 vulnerability in 1 package.
 
 @cyanheads/git-mcp-server 1.1.0
-  location: mcp.json
+  location: .mcp.json
   fix:      upgrade to >=2.1.5
 
   HIGH  GHSA-3q26-f695-pp76  fixed in 2.1.5  @cyanheads/git-mcp-server vulnerable to command injection in several tools  [osv.dev]
+        owasp-asi: ASI02, ASI05  [owasp-agentic-top-10-2026]
 
 Summary
   Scanned 1 manifest, 1 component · advisories: 1 · posture: skipped · observations: 0
   sources: osv.dev
 
 Next
-  emit Agent BOM: openaca bom repo --target . --output openaca-bom.json
+  emit Agent BOM: openaca bom repo --target . --output-dir boms/
 ```
 
 ### `clean-scan/` — no findings (same package, fixed version)
@@ -91,15 +98,16 @@ Expected output:
 
 ```
 Target
-  host surface: repository
+  host surface: Claude Code
   path: .
+  coverage: complete
 
 Inventory
 
-repo .
+Claude Code
 └── direct components/
     └── MCPs/ (1)
-        └── @cyanheads/git-mcp-server@2.1.5 (stdio via npx) (from mcp.json)
+        └── @cyanheads/git-mcp-server@2.1.5 (stdio via npx) (from .mcp.json)
 
 Findings
 
@@ -112,7 +120,7 @@ Summary
   sources: (none)
 
 Next
-  emit Agent BOM: openaca bom repo --target . --output openaca-bom.json
+  emit Agent BOM: openaca bom repo --target . --output-dir boms/
 ```
 
 ### `posture-checks/` — configuration hygiene findings
@@ -134,24 +142,25 @@ hygiene side:
 
 ```
 Target
-  host surface: repository
+  host surface: Claude Code
   path: .
+  coverage: complete
 
 Inventory
 
-repo .
+Claude Code
 └── direct components/
     └── MCPs/ (3)
-        ├── @modelcontextprotocol/server-filesystem (stdio via npx, unpinned) (from mcp.json)  [! GHSA-hc55-p739-j48w, GHSA-q66q-fx2p-7w4m]
-        ├── http://example.com/mcp (SSE) (from mcp.json)
-        └── some-mcp-server (stdio via uvx, unpinned) (from mcp.json)
+        ├── @modelcontextprotocol/server-filesystem (stdio via npx, unpinned) (from .mcp.json)  [! GHSA-hc55-p739-j48w, GHSA-q66q-fx2p-7w4m]
+        ├── http://example.com/mcp (SSE) (from .mcp.json)
+        └── some-mcp-server (stdio via uvx, unpinned) (from .mcp.json)
 
 Findings
 
 Found 2 vulnerabilities in 1 package.
 
 @modelcontextprotocol/server-filesystem
-  location: mcp.json
+  location: .mcp.json
   fix:      upgrade to >=2025.7.1
 
   HIGH  GHSA-hc55-p739-j48w  fixed in 2025.7.1  @modelcontextprotocol/server-filesystem vulnerability allows for path validation bypass via colliding path prefix  [osv.dev]
@@ -160,17 +169,17 @@ Found 2 vulnerabilities in 1 package.
 Posture findings (configuration hygiene):
 
   MEDIUM  openaca-posture-insecure-transport  mcp-server/http-endpoint @ http://example.com/mcp
-       location: mcp.json
+       location: .mcp.json
        fix:      Configure the MCP endpoint over https://. Plain http:// exposes prompts, tool calls, and any returned data to network observers and tampering.
        standards: A02:2021, asi04, mcp04:2025
 
   LOW  openaca-posture-mutable-install-reference  PyPI/some-mcp-server (uvx some-mcp-server)
-       location: mcp.json
+       location: .mcp.json
        fix:      Pin the install reference to an exact version, commit SHA, or Docker digest. Mutable refs (no version, @latest, branch refs, missing digest) can roll forward to unexpected code at any time.
        standards: CWE-1357, Pinned-Dependencies, immutable-references, asi04, mcp04:2025
 
   LOW  openaca-posture-mutable-install-reference  npm/@modelcontextprotocol/server-filesystem (npx @modelcontextprotocol/server-filesystem)
-       location: mcp.json
+       location: .mcp.json
        fix:      Pin the install reference to an exact version, commit SHA, or Docker digest. Mutable refs (no version, @latest, branch refs, missing digest) can roll forward to unexpected code at any time.
        standards: CWE-1357, Pinned-Dependencies, immutable-references, asi04, mcp04:2025
 
@@ -179,7 +188,7 @@ Summary
   sources: osv.dev
 
 Next
-  emit Agent BOM: openaca bom repo --target . --output openaca-bom.json
+  emit Agent BOM: openaca bom repo --target . --output-dir boms/
 ```
 
 (Exact wording may shift across pre-release builds; the rule IDs are
@@ -200,7 +209,7 @@ openaca scan repo --target . -v --fail-on none
 Expected inventory shape:
 
 ```
-repo .
+Claude Code
 └── plugin/playwright  [! bundles: GHSA-6fg3-hvw7-2fwq]
     └── MCPs/ (1)
         └── @playwright/mcp@0.0.39 (stdio via npx) (from .mcp.json)  [! GHSA-6fg3-hvw7-2fwq]
@@ -249,8 +258,8 @@ Expected output:
 ```
 loaded 107 OpenACA overlay(s)
 federation: queried 5 target(s) on osv.dev; fetched 4 advisory record(s)
-  pkg:npm/%40cyanheads/git-mcp-server@2.1.5
   pkg:npm/%40playwright/mcp@0.0.39
+  pkg:npm/%40cyanheads/git-mcp-server@2.1.5
   npm:@modelcontextprotocol/server-filesystem (unpinned)
   PyPI:some-mcp-server (unpinned)
   pkg:npm/%40cyanheads/git-mcp-server@1.1.0
@@ -262,42 +271,43 @@ matched 4 finding(s):
   pkg:npm/%40cyanheads/git-mcp-server@1.1.0 → GHSA-3q26-f695-pp76 (high)
 
 Target
-  host surface: repository
+  host surface: Claude Code
   path: .
+  coverage: complete
 
 Inventory
 
-repo .
+Claude Code
 ├── plugin/playwright  [! bundles: GHSA-6fg3-hvw7-2fwq]
 │   └── MCPs/ (1)
 │       └── @playwright/mcp@0.0.39 (stdio via npx) (from playwright-plugin/.mcp.json)  [! GHSA-6fg3-hvw7-2fwq]
 └── direct components/
     └── MCPs/ (5)
-        ├── @cyanheads/git-mcp-server@1.1.0 (stdio via npx) (from sample-mcp/mcp.json)  [! GHSA-3q26-f695-pp76]
-        ├── @cyanheads/git-mcp-server@2.1.5 (stdio via npx) (from clean-scan/mcp.json)
-        ├── @modelcontextprotocol/server-filesystem (stdio via npx, unpinned) (from posture-checks/mcp.json)  [! GHSA-hc55-p739-j48w, GHSA-q66q-fx2p-7w4m]
-        ├── http://example.com/mcp (SSE) (from posture-checks/mcp.json)
-        └── some-mcp-server (stdio via uvx, unpinned) (from posture-checks/mcp.json)
+        ├── @cyanheads/git-mcp-server@1.1.0 (stdio via npx) (from sample-mcp/.mcp.json)  [! GHSA-3q26-f695-pp76]
+        ├── @cyanheads/git-mcp-server@2.1.5 (stdio via npx) (from clean-scan/.mcp.json)
+        ├── @modelcontextprotocol/server-filesystem (stdio via npx, unpinned) (from posture-checks/.mcp.json)  [! GHSA-hc55-p739-j48w, GHSA-q66q-fx2p-7w4m]
+        ├── http://example.com/mcp (SSE) (from posture-checks/.mcp.json)
+        └── some-mcp-server (stdio via uvx, unpinned) (from posture-checks/.mcp.json)
 
 Findings
 
 Found 4 vulnerabilities in 3 packages.
 
 @cyanheads/git-mcp-server 1.1.0
-  location: sample-mcp/mcp.json
+  location: sample-mcp/.mcp.json
   fix:      upgrade to >=2.1.5
 
   HIGH  GHSA-3q26-f695-pp76  fixed in 2.1.5  @cyanheads/git-mcp-server vulnerable to command injection in several tools  [osv.dev]
-        taxonomies: owasp_agentic_top10=asi02,asi05
+        owasp-asi: ASI02, ASI05  [owasp-agentic-top-10-2026]
         evidence_level: confirmed
         confidence: high
         Component: mcp_server git
         Source: pkg:npm/%40cyanheads/git-mcp-server@1.1.0
         Active in: claude-code
-        Declared by: sample-mcp/mcp.json
+        Declared by: sample-mcp/.mcp.json
 
 @modelcontextprotocol/server-filesystem
-  location: posture-checks/mcp.json
+  location: posture-checks/.mcp.json
   fix:      upgrade to >=2025.7.1
 
   HIGH  GHSA-hc55-p739-j48w  fixed in 2025.7.1  @modelcontextprotocol/server-filesystem vulnerability allows for path validation bypass via colliding path prefix  [osv.dev]
@@ -305,13 +315,13 @@ Found 4 vulnerabilities in 3 packages.
         Component: mcp_server unpinned-npx
         Source: pkg:npm/%40modelcontextprotocol/server-filesystem
         Active in: claude-code
-        Declared by: posture-checks/mcp.json
+        Declared by: posture-checks/.mcp.json
   HIGH  GHSA-q66q-fx2p-7w4m  fixed in 2025.7.1  @modelcontextprotocol/server-filesystem allows for path validation bypass via prefix matching and symlink handling  [osv.dev]
         confidence: unknown
         Component: mcp_server unpinned-npx
         Source: pkg:npm/%40modelcontextprotocol/server-filesystem
         Active in: claude-code
-        Declared by: posture-checks/mcp.json
+        Declared by: posture-checks/.mcp.json
 
 @playwright/mcp 0.0.39
   location: <demo-repo>/playwright-plugin/.mcp.json
@@ -330,17 +340,17 @@ Found 4 vulnerabilities in 3 packages.
 Posture findings (configuration hygiene):
 
   MEDIUM  openaca-posture-insecure-transport  mcp-server/http-endpoint @ http://example.com/mcp
-       location: posture-checks/mcp.json
+       location: posture-checks/.mcp.json
        fix:      Configure the MCP endpoint over https://. Plain http:// exposes prompts, tool calls, and any returned data to network observers and tampering.
        standards: A02:2021, asi04, mcp04:2025
 
   LOW  openaca-posture-mutable-install-reference  PyPI/some-mcp-server (uvx some-mcp-server)
-       location: posture-checks/mcp.json
+       location: posture-checks/.mcp.json
        fix:      Pin the install reference to an exact version, commit SHA, or Docker digest. Mutable refs (no version, @latest, branch refs, missing digest) can roll forward to unexpected code at any time.
        standards: CWE-1357, Pinned-Dependencies, immutable-references, asi04, mcp04:2025
 
   LOW  openaca-posture-mutable-install-reference  npm/@modelcontextprotocol/server-filesystem (npx @modelcontextprotocol/server-filesystem)
-       location: posture-checks/mcp.json
+       location: posture-checks/.mcp.json
        fix:      Pin the install reference to an exact version, commit SHA, or Docker digest. Mutable refs (no version, @latest, branch refs, missing digest) can roll forward to unexpected code at any time.
        standards: CWE-1357, Pinned-Dependencies, immutable-references, asi04, mcp04:2025
 
@@ -349,7 +359,7 @@ Summary
   sources: osv.dev
 
 Next
-  emit Agent BOM: openaca bom repo --target . --output openaca-bom.json
+  emit Agent BOM: openaca bom repo --target . --output-dir boms/
 ```
 
 (`<demo-repo>` stands for your clone's absolute path — the
